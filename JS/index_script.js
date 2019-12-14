@@ -134,49 +134,70 @@ function CreateMissleEnemy(x, y) {
     missle.className = 'missle-hostile';
     missle.style.left = x + 'px';
     missle.style.top = y + 'px';
-    setInterval(function () { missle_move(missle, 2, 1) }, 40)
+    setInterval(function () { missle_move_hostile(missle, 3, 1) }, 40)
     return missle;
 }
-
+var intr;
 function CreateMissleFriendly(x, y) {
     let missle = document.createElement('img');
     missle.src = "IMG/missle-friendly.gif";
     missle.className = 'missle-friendly';
     missle.style.left = x + 'px';
     missle.style.top = y + 'px';
-    setInterval(function () { missle_move(missle, 2, -1) }, 1)
+    setInterval(function () { missle_move_friendly(missle, 2, -1) }, 1)
     return missle;
 }
 
-Container.appendChild(CreateMissleEnemy(100, 100));
-Container.appendChild(CreateMissleEnemy(450, 100));
-Container.appendChild(CreateMissleFriendly(150, 500));
+Container.appendChild(CreateMissleEnemy(340, 100));
 
 
-
-function missle_move(target, step, reverse) {
+function missle_move_hostile(target, step, reverse) {
     let target_offset = target.getBoundingClientRect()
     target.style.top = target_offset.top + step * reverse - Container_offset.top + 'px';
 
     hit_detection(target, plane)
-
 
     if (target_offset.top > Container_offset.height + target_offset.height || target_offset.top < 0 - target_offset.height) {
         Container.removeChild(target);
     }
 }
 
+function missle_move_hostile(target, step, reverse) {
+    let target_offset = target.getBoundingClientRect()
+    target.style.top = target_offset.top + step * reverse - Container_offset.top + 'px';
+
+    hit_detection(target, plane)
+
+    if (target_offset.top > Container_offset.height + target_offset.height || target_offset.top < 0 - target_offset.height) {
+        Container.removeChild(target);
+    }
+}
+
+
 function hit_detection(missle, target) {
     let target_offset = target.getBoundingClientRect();
     let missle_offset = missle.getBoundingClientRect();
     if (
-        target_offset.top < missle_offset.top &&
-        target_offset.left < missle_offset.left &&
-        target_offset.bottom < missle_offset.bottom &&
-        target_offset.right < missle_offset.right
+        missle_offset.top > target_offset.top - missle_offset.height / 2 &&
+        missle_offset.left > target_offset.left - missle_offset.width / 4 &&
+        missle_offset.right < target_offset.right + missle_offset.width / 4 &&
+        missle_offset.bottom < target_offset.bottom + missle_offset.height / 2
     ) {
         console.log('hit');
-        alert('hit')
+        document.body.style.background = 'red';
+        // createExplosion(missle_offset.left + missle_offset.width / 4, missle_offset.top + missle_offset.height / 2)
+        Container.removeChild(missle);
+    } else {
+        //ignore
     }
 }
 
+
+// function createExplosion(x, y) {
+//     let explosion = document.createElement('img');
+//     explosion.src = "IMG/explosion.gif";
+//     explosion.className = 'missle-friendly';
+//     explosion.style.left = x - Container_offset.left + 'px';
+//     explosion.style.top = y - Container_offset.top + 'px';
+//     Container.appendChild(explosion)
+// }
