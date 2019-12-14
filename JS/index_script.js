@@ -102,7 +102,7 @@ function mouseDown(event) {
         Shift.y = event.clientY - plane.getBoundingClientRect().top;
 
         //TODO LITLE SHIFT
-        
+
         plane.style.left = event.clientX - Shift.x - Container_offset.left + 'px';
         plane.style.top = event.clientY - Shift.y - Container_offset.top + 'px';
 
@@ -118,7 +118,7 @@ function mouseDown(event) {
 
 function mouseMove() {
 
- 
+
     plane.style.left = event.clientX - Shift.x - Container_offset.left + 'px';
     plane.style.top = event.clientY - Shift.y - Container_offset.top + 'px';
 }
@@ -126,9 +126,57 @@ function mouseMove() {
 
 let missle_hostile = document.getElementById('missle-hostile');
 
-setInterval(function () { missle_move(missle_hostile, 0.001) }, 10)
 
-function missle_move(target, step) {
-    target.style.top = target.getBoundingClientRect().top + step + 'px';
 
+function CreateMissleEnemy(x, y) {
+    let missle = document.createElement('img');
+    missle.src = "IMG/missle-hostile.gif";
+    missle.className = 'missle-hostile';
+    missle.style.left = x + 'px';
+    missle.style.top = y + 'px';
+    setInterval(function () { missle_move(missle, 2, 1) }, 40)
+    return missle;
 }
+
+function CreateMissleFriendly(x, y) {
+    let missle = document.createElement('img');
+    missle.src = "IMG/missle-friendly.gif";
+    missle.className = 'missle-friendly';
+    missle.style.left = x + 'px';
+    missle.style.top = y + 'px';
+    setInterval(function () { missle_move(missle, 2, -1) }, 1)
+    return missle;
+}
+
+Container.appendChild(CreateMissleEnemy(100, 100));
+Container.appendChild(CreateMissleEnemy(450, 100));
+Container.appendChild(CreateMissleFriendly(150, 500));
+
+
+
+function missle_move(target, step, reverse) {
+    let target_offset = target.getBoundingClientRect()
+    target.style.top = target_offset.top + step * reverse - Container_offset.top + 'px';
+
+    hit_detection(target, plane)
+
+
+    if (target_offset.top > Container_offset.height + target_offset.height || target_offset.top < 0 - target_offset.height) {
+        Container.removeChild(target);
+    }
+}
+
+function hit_detection(missle, target) {
+    let target_offset = target.getBoundingClientRect();
+    let missle_offset = missle.getBoundingClientRect();
+    if (
+        target_offset.top < missle_offset.top &&
+        target_offset.left < missle_offset.left &&
+        target_offset.bottom < missle_offset.bottom &&
+        target_offset.right < missle_offset.right
+    ) {
+        console.log('hit');
+        alert('hit')
+    }
+}
+
