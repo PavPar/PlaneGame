@@ -1,4 +1,4 @@
-.gameObject, .gameObject_enemy{
+.gameObject, .bomber{
     width: 150px;
     height: auto;
     position: absolute;
@@ -8,7 +8,7 @@
     border: 1px red solid;
 }
 
-.gameObject_enemy{
+.bomber{
     z-index: 1;
     top: 10px;
     left: 10px;
