@@ -118,27 +118,43 @@ function mouseMove() {
 
 var ObjOnScreen = [];
 
+
+
+
 function CreateMissleEnemy(x, y) {
-    let missle = document.createElement('img');
-    missle.id = "missle-" + missle_id++;
-    missle.src = "IMG/missle-hostile.gif";
-    missle.className = 'missle-hostile';
-    missle.style.left = x + 'px';
-    missle.style.top = y + 'px';
-    ObjOnScreen.push(missle);
-    setInterval(function () { missle_move_hostile(missle, 3, 1) }, 4)
-    return missle;
+    let Obj = {
+        name: undefined,
+        mov_int: undefined,
+        shot_int: undefined
+    }
+
+    let missle_enemy_temp = document.createElement('img');
+    missle_enemy_temp.id = "missle-" + missle_id++;
+    missle_enemy_temp.src = "IMG/missle-hostile.gif";
+    missle_enemy_temp.className = 'missle-hostile';
+
+    missle_enemy_temp.style.left = x + 'px';
+    missle_enemy_temp.style.top = y + 'px';
+
+    Obj.id = missle_enemy_temp.id;
+    Obj.mov_int = setInterval(function () { missle_move_hostile(missle_enemy_temp, 3, 1) }, 4)
+    Obj.name = missle_enemy_temp;
+    ObjOnScreen.push(Obj);
+    return missle_enemy_temp;
 }
 var missle_id = 0;
-function CreateMissleFriendly(x, y) {
-    let missle = document.createElement('img');
 
-    missle.src = "IMG/missle-friendly.gif";
-    missle.className = 'missle-friendly';
-    missle.style.left = x + 'px';
-    missle.style.top = y + 'px';
-    setInterval(function () { missle_move_friendly(missle, 2, -1) }, 1)
-    return missle;
+let missle_friendly_temp = document.createElement('img');
+missle_friendly_temp.src = "IMG/missle-friendly.gif";
+missle_friendly_temp.className = 'missle-friendly';
+setInterval(function () { missle_move_friendly(missle_friendly_temp, 2, -1) }, 3)
+
+function CreateMissleFriendly(x, y) {
+
+    missle_friendly_temp.style.left = x + 'px';
+    missle_friendly_temp.style.top = y + 'px';
+
+    return missle_friendly_temp;
 }
 
 
@@ -148,7 +164,10 @@ function PlaneShoot() {
     let plane_offset = plane.getBoundingClientRect();
     Container.appendChild(CreateMissleFriendly(plane_offset.left + plane_offset.width / 3 - Container_offset.left, plane_offset.top - Container_offset.top));
 }
-
+function BomberShoot(target) {
+    let plane_offset = target.getBoundingClientRect();
+    Container.appendChild(CreateMissleEnemy(plane_offset.left + plane_offset.width / 3 - Container_offset.left, plane_offset.top + Container_offset.top));
+}
 
 function missle_move_hostile(target, step, reverse) {
     let target_offset = target.getBoundingClientRect()
@@ -157,8 +176,20 @@ function missle_move_hostile(target, step, reverse) {
     hit_detection(target, plane)
 
     if (target_offset.top > Container_offset.height + target_offset.height || target_offset.top < 0 - target_offset.height) {
-        ObjOnScreen.splice(ObjOnScreen.indexOf(target), 1);
-        Container.removeChild(target);
+        ObjOnScreen.forEach((element) => {
+            if (element.name.id == target.id) {
+                if (element.shot_int !== undefined) {
+                    clearInterval(element.shot_int);
+                }
+                clearInterval(element.mov_int);
+                ObjOnScreen.splice(ObjOnScreen.indexOf(element), 1);
+
+                Container.removeChild(target);
+                return;
+            }
+        })
+
+
     }
 }
 
@@ -166,7 +197,7 @@ function missle_move_friendly(target, step, reverse) {
     let target_offset = target.getBoundingClientRect()
     target.style.top = target_offset.top + step * reverse - Container_offset.top + 'px';
     ObjOnScreen.forEach((element) => {
-        if (element.id.split('-')[0] !== 'missle') {
+        if (element.name.id.split('-')[0] !== 'missle') {
             shot_detection(target, element)
         }
     })
@@ -177,7 +208,7 @@ function missle_move_friendly(target, step, reverse) {
 }
 
 function shot_detection(missle, victim) {
-    let victim_offset = victim.getBoundingClientRect();
+    let victim_offset = victim.name.getBoundingClientRect();
     let missle_offset = missle.getBoundingClientRect();
 
 
@@ -189,9 +220,11 @@ function shot_detection(missle, victim) {
         &&
         missle_offset.bottom < victim_offset.bottom + missle_offset.height / 2
     ) {
+        clearInterval(ObjOnScreen[ObjOnScreen.indexOf(victim)].shot_int);
+        clearInterval(ObjOnScreen[ObjOnScreen.indexOf(victim)].mov_int);
         ObjOnScreen.splice(ObjOnScreen.indexOf(victim), 1);
         score += scorepoints.bomber;
-        Container.removeChild(victim);
+        Container.removeChild(victim.name);
         Container.removeChild(missle);
     } else {
         //ignore
@@ -199,15 +232,28 @@ function shot_detection(missle, victim) {
 }
 var bomber_id = 0;
 
+
+
+
 function CreateBomber(x, y) {
+    let Obj = {
+        id: undefined,
+        name: undefined,
+        mov_int: undefined,
+        shot_int: undefined
+    }
     let bomber = document.createElement('img');
-    bomber.id = 'bomber-' + bomber_id++
     bomber.src = "IMG/enemy_bomber.png";
     bomber.className = 'bomber';
+    bomber.id = 'bomber-' + bomber_id++
     bomber.style.left = x + 'px';
     bomber.style.top = y + 'px';
-    setInterval(function () { missle_move_hostile(bomber, 2, 1) }, 100)
-    ObjOnScreen.push(bomber);
+    Obj.id = bomber.id;
+    Obj.mov_int = setInterval(function () { missle_move_hostile(bomber, 2, 1) }, 100)
+    Obj.shot_int = setInterval(function () { BomberShoot(bomber) }, getRandomArbitrary(1500, 2500))
+    Obj.name = bomber;
+
+    ObjOnScreen.push(Obj);
     return bomber;
 }
 
@@ -234,7 +280,7 @@ var generator = setInterval(function () { RandomGenerator() }, 10);
 var diffic = {
     missle: 0,
     missle_max: 10,
-    bomber: 1,
+    bomber: 2,
     bomber_max: 10
 }
 function RandomGenerator() {
@@ -243,7 +289,7 @@ function RandomGenerator() {
     ObjTypes.missles = [];
 
     ObjOnScreen.forEach(element => {
-        let splitRes = element.id.split('-')
+        let splitRes = element.name.id.split('-')
         switch (splitRes[0]) {
             case 'bomber': {
                 ObjTypes.bombers.push(element);
@@ -256,30 +302,19 @@ function RandomGenerator() {
         }
     })
 
-    if (scorePrev - score < -1000) {
+    if (scorePrev - score < -100) {
         diffic.bomber++;
-        diffic.missle++;
+        // diffic.missle++;
         scorePrev = score;
     }
 
     if (ObjTypes.bombers.length < diffic.bomber) {
         let bomber = CreateBomber(getRandomArbitrary(0 + Number(bomber_size.width.replace('px', '')), Container_offset.width - Number(bomber_size.width.replace('px', ''))), 0 - Number(bomber_size.height.replace('px', '')));
         Container.appendChild(bomber);
+    }
 
-    }
-    if (ObjTypes.missles.length < diffic.missle) {
-        Container.appendChild(CreateMissleEnemy(getRandomArbitrary(0 + missle_size.width.replace('px', ''), Container_offset.width - missle_size.width.replace('px', '')), getRandomArbitrary(0, 5)));
-    }
-    // console.log(ObjTypes);
 }
-// function createExplosion(x, y) {
-//     let explosion = document.createElement('img');
-//     explosion.src = "IMG/explosion.gif";
-//     explosion.className = 'missle-friendly';
-//     explosion.style.left = x - Container_offset.left + 'px';
-//     explosion.style.top = y - Container_offset.top + 'px';
-//     Container.appendChild(explosion)
-// }
+
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
 }
@@ -290,11 +325,19 @@ function Lost() {
     clearInterval(scoreCnt);
     clearInterval(shot);
     Container.removeEventListener('mousedown', mouseDown);
+    Container.removeEventListener('mousemove', mouseMove);
+    Container.onmouseup = null;
     document.body.style.backgroundColor = 'red';
     scoreOut.innerHTML = 'You Failed Your Motherland<br>';
     scoreOut.style.fontSize = 50 + 'px'
+    ObjOnScreen.forEach((element) => {
+        if (element.shot_int !== undefined) {
+            clearInterval(element.shot_int);
+        }
+        clearInterval(element.mov_int);
+    })
 }
 
 function getRandom(min, max) {
-    getRandomArbitrary(min,max);
+    getRandomArbitrary(min, max);
 }
