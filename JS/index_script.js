@@ -6,11 +6,14 @@ var score = 0;
 var scorePrev = 0;
 
 const canvas = can.getBoundingClientRect();
-const imgSrc = 'IMG/Sample.jpg';
+const imgSrc = 'IMG/Sample-2.jpg';
+const imgSrc2 = 'IMG/Sample.jpg';
+
 var scoreOut = document.getElementById('score')
 const scoreText = 'Score : '
 scoreOut.innerHTML = scoreText + score;
-
+scoreOut.style.top = 50 + 'px';
+scoreOut.style.width = '100%';
 const bomber_size = window.getComputedStyle(document.getElementById('bomber-sample'));
 const missle_size = window.getComputedStyle(document.getElementById('missle-sample'));
 
@@ -69,7 +72,7 @@ class BackGround {
     }
 }
 
-var BackGrnd = new BackGround(can, imgSrc, 0, 0, canvas.width / 2, canvas.height / 2)
+var BackGrnd = new BackGround(can, imgSrc, 0, 0 + canvas.height, canvas.width/4, canvas.height/4)
 BackGrnd.Loop();
 var BackInt = window.setInterval(function () { BackGrnd.ShiftUp(0.01) }, 10)
 
@@ -92,8 +95,6 @@ function mouseDown(event) {
         Container_offset = Container.getBoundingClientRect();
         Shift.x = event.clientX - plane.getBoundingClientRect().left;
         Shift.y = event.clientY - plane.getBoundingClientRect().top;
-
-        //TODO LITLE SHIFT
 
         plane.style.left = event.clientX - Shift.x - Container_offset.left + 'px';
         plane.style.top = event.clientY - Shift.y - Container_offset.top + 'px';
@@ -175,7 +176,7 @@ function missle_move_hostile(target, step, reverse) {
 
     hit_detection(target, plane)
 
-    if (target_offset.top > Container_offset.height + target_offset.height || target_offset.top < 0 - target_offset.height) {
+    if (target_offset.top > Container_offset.height + target_offset.height) {
         ObjOnScreen.forEach((element) => {
             if (element.name.id == target.id) {
                 if (element.shot_int !== undefined) {
@@ -185,6 +186,9 @@ function missle_move_hostile(target, step, reverse) {
                 ObjOnScreen.splice(ObjOnScreen.indexOf(element), 1);
 
                 Container.removeChild(target);
+                if (target.id.split('-')[0] == 'bomber') {
+                    Lost();
+                }
                 return;
             }
         })
@@ -249,7 +253,7 @@ function CreateBomber(x, y) {
     bomber.style.left = x + 'px';
     bomber.style.top = y + 'px';
     Obj.id = bomber.id;
-    Obj.mov_int = setInterval(function () { missle_move_hostile(bomber, 2, 1) }, 100)
+    Obj.mov_int = setInterval(function () { missle_move_hostile(bomber, 2, 1) }, 50)
     Obj.shot_int = setInterval(function () { BomberShoot(bomber) }, getRandomArbitrary(1500, 2500))
     Obj.name = bomber;
 
@@ -302,19 +306,27 @@ function RandomGenerator() {
         }
     })
 
-    if (scorePrev - score < -100) {
+    if (scorePrev - score < -500) {
         diffic.bomber++;
         // diffic.missle++;
         scorePrev = score;
     }
 
     if (ObjTypes.bombers.length < diffic.bomber) {
-        let bomber = CreateBomber(getRandomArbitrary(0 + Number(bomber_size.width.replace('px', '')), Container_offset.width - Number(bomber_size.width.replace('px', ''))), 0 - Number(bomber_size.height.replace('px', '')));
+        // let bomber = CreateBomber(getRandom(0 + Number(bomber_size.width.replace('px', '')), Container_offset.width - Number(bomber_size.width.replace('px', ''))), 0 - 2 * Number(bomber_size.height.replace('px', '')));
+        let rand = getRandom(0 + Number(bomber_size.width.replace('px', '')), Container_offset.width - Number(bomber_size.width.replace('px', '')), 0 - Number(bomber_size.height.replace('px', '')), 0 - 2 * Number(bomber_size.height.replace('px', '')));
+        let bomber = CreateBomber(rand.x, rand.y);
         Container.appendChild(bomber);
+        // CheckDist(bomber)
+
+
+
     }
+
 
 }
 
+// setInterval(function () { ObjOnScreen.forEach(element => { CheckDist(element) }); }, 1)
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
 }
@@ -328,8 +340,9 @@ function Lost() {
     Container.removeEventListener('mousemove', mouseMove);
     Container.onmouseup = null;
     document.body.style.backgroundColor = 'red';
-    scoreOut.innerHTML = 'You Failed Your Motherland<br>';
-    scoreOut.style.fontSize = 50 + 'px'
+
+
+    LosingMenu('You Failed Your Motherland');
     ObjOnScreen.forEach((element) => {
         if (element.shot_int !== undefined) {
             clearInterval(element.shot_int);
@@ -338,6 +351,84 @@ function Lost() {
     })
 }
 
-function getRandom(min, max) {
-    getRandomArbitrary(min, max);
+function getRandom(minX, maxX, minY, maxY) {
+    let genval = {};
+    let genval_x = getRandomArbitrary(minX, maxX);
+    let genval_y = getRandomArbitrary(minY, maxY);
+
+    if (ObjOnScreen.length == 0) {
+        return genval
+    } else {
+        ObjOnScreen.forEach(element => {
+            let element_left = Number(element.name.style.left.replace('px', ''));
+
+            let element_width = element.name.width;
+
+            if ((genval_x > element_left && genval_x < element_left + element_width)) {
+                if (element_left - Number(bomber_size.width.replace('px', '')) - 10 < 0) {
+                    genval_x = element_left + 2 * element.name.width + 10;
+                } else {
+                    genval_x = element_left - element.name.width - 10;
+                }
+            }
+        });
+        let gen = {
+        }
+        gen.x = genval_x
+        gen.y = genval_y
+        console.log(gen);
+        return gen
+    }
+
+
 }
+
+function LosingMenu(text) {
+    var msg = document.createElement('div');
+    msg.id = 'MSG-lost'
+    msg.style.top = Container_offset.height / 2 - 100 + 'px';
+    msg.style.left = 0 + 'px';
+    msg.style.fontSize = 25 + 'px'
+    msg.innerHTML = text + '<br>' + 'Total Score: ' + score + `<br> Enter your name : <br> <input id='input-Name' type="text">`;
+
+    Container.appendChild(msg)
+
+    document.addEventListener('keypress', (event) => {
+
+        if (event.keyCode == '13') {
+            event.preventDefault();
+            let UserScore = {
+                name: undefined,
+                score: undefined
+            }
+            UserScore.name = document.getElementById('input-Name').value;
+            UserScore.score = score;
+            console.log(UserScore);
+            let json_dat = JSON.stringify(UserScore);
+            localStorage.setItem("score", json_dat);
+
+            window.location.href = "score-board.html";
+        }
+    })
+}
+
+// function CheckDist(target) {
+//     ObjOnScreen.forEach(element => {
+//         let element_height = element.name.height;
+//         let element_top = Number(element.name.style.top.replace('px', ''));
+//         let element_left = Number(element.name.style.left.replace('px', ''));
+//         let element_width = element.name.width;
+
+//         let target_top = Number(target.name.style.top.replace('px', '')) + element_height;
+//         let target_left = Number(target.name.style.left.replace('px', ''));
+
+//         if (element.name.id.split('-')[0] == target.id.split('-')[0] && target.id !== element.name.id && element.name.id.split('-')[1] !== '0') {
+//             if (element_top - element_height < target_top && (target_left > element_left && target_left < element_left + element_width)) {
+//                 target.name.style.top = element_top - element_height * 2 + 'px';
+//             }
+//         }
+//     });
+// }
+
+// 
+
